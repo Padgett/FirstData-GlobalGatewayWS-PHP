@@ -8,17 +8,22 @@
  * 
  */
 class FirstData {
+  public $oid;
   private $sharedKey;
   private $store;
   private $config;
+  private $options;
   private $totals;
   private $cardInfo;
+  private $billingInfo;
   
   /* function: __construct
-   * Required Params: sharedKey(string)
-   * Optional Params: config(array)
+   * Constructs the object.
+   * Options array will be appended to the charge request. Add your custom fields here.
+   * Required Params: sharedKey, store, oid(public - can be set later)
+   * Optional Params: config(array), options(array)
    */
-  public function __construct($sharedKey,$store,$config = array(),$options = array()) {
+  public function __construct($sharedKey,$store,$oid = '',$config = array(),$options = array()) {
     if (!$sharedKey) {
       throw new Exception('Shared Key Required.');
     } else {
@@ -30,6 +35,8 @@ class FirstData {
       $this->store = $store;
     }
     
+    if ($oid) $this->oid = $oid;
+    
     $this->config = array(
         'txtntype'    => $config['txtntype'] || 'sale',
         'timezone'    => $config['timezone'] || date('T'),
@@ -37,15 +44,18 @@ class FirstData {
         'trxOrigin'   => $config['trxOrigin'] || 'ECI'
     );
     
+    foreach ($options as $key => $val) {
+      $this->options[$key] = $val;
+    }
   }
   
   public function __destruct() {
     $this->sharedKey = null;
     unset($this->sharedKey);
     $this->store = null;
-    unset($this->store); 
-    $this->config = null;
-    unset($this->config);
+    unset($this->store);
+    $this->cardinfo = null;
+    unset($this->cardInfo);
   }
   
   /* function: setTotals
@@ -66,31 +76,79 @@ class FirstData {
    * Input: cardType(M, V, A, C, J, D), cardNum, expMonth, expYear, cvv, billingInfo(array)
    * M = Mastercard, V = Visa, A = Amex, C = Diners, J = JCB, D = Discover
    */
-  public function setCardInfo($cardType,$cardNum,$expMonth,$expYear,$cvv,$billingInfo) {
+  public function setCardInfo($cardType,$cardNum,$expMonth,$expYear,$cvv,$billingInfo = array()) {
     $cardTypes = array('M','V','A','C','J','D');
-    if (!$cardType || !$cardNum || !$expMonth || !$expYear || !$cvv || !$billingInfo) {
+    if (!$cardType || !$cardNum || !$expMonth || !$expYear || !$cvv) {
       throw new Exception('Complete card info required.');
     }
     if (!in_array(strtoupper($cardType), $cardTypes)) {
       throw new Exception('Card type invalid.');
     }
     
+    $this->cardInfo = array(
+        'cardnumber'  => $cardNum,
+        'expmonth'    => $expMonth,
+        'expyear'     => $expYear,
+        'cvm'         => $cvv
+    );
+    
+    //Setup the billing info if it's been passed in.
+    if ($billingInfo) {
+      //TODO: This.
+    }
+  }
+  
+  /* function: setBillingInfo
+   * 
+   */
+  public function setBillingInfo($info) {
+    //TODO: This.
   }
   
   /* function: chargeIt
-   * 
+   * Charges the card
    */
   public function chargeIt() {
+    if (empty($this->oid)) {
+      throw new Exception('Order ID (oid) is not set.');
+    }
+    
     $txndatetime = date('%Y:%m:%d-%H:%i:%s');
     $hash = createHash($txndatetime);
     
+    /*** Send to First Data ***/
+    
+    /*** Handle Response ***/
+    
+    //Let's wipe the card info from memory, just to be safe.
+    $this->cardInfo = null;
+    unset($this->cardInfo);
+  }
+  
+  /* function: setOptions
+   * Replaces or clears existing options
+   */
+  public function setOptions($options = array()) {
+    $this->options = array();
+    foreach ($options as $key => $val) {
+      $this->options[$key] = $val;
+    }
+  }
+  
+  /* function: addOptions
+   * Appends to or updates existing options
+   */
+  public function addOptions($options = array()) {
+    foreach ($options as $key => $val) {
+      $this->options[$key] = $val;
+    }
   }
   
   /* function: createHash
    * Creates SHA2 hash for authentication to gateway
    */
   private function createHash($dateTime) {
-    $str = $this->store.$dateTime().$this->totals['chargetotal'].$this->sharedKey;
+    $str = $this->store.$dateTime.$this->totals['chargetotal'].$this->sharedKey;
     for ($i = 0; $i < strlen($str); $i++){ 
       $hex_str.=dechex(ord($str[$i]));
     }
