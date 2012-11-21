@@ -12,6 +12,7 @@ class FirstData {
   private $store;
   private $config;
   private $totals;
+  private $cardInfo;
   
   /* function: __construct
    * Required Params: sharedKey(string)
@@ -28,12 +29,14 @@ class FirstData {
     } else {
       $this->store = $store;
     }
+    
     $this->config = array(
         'txtntype'    => $config['txtntype'] || 'sale',
         'timezone'    => $config['timezone'] || date('T'),
         'mode'        => $config['mode'] || 'payonly',
         'trxOrigin'   => $config['trxOrigin'] || 'ECI'
     );
+    
   }
   
   public function __destruct() {
@@ -45,6 +48,9 @@ class FirstData {
     unset($this->config);
   }
   
+  /* function: setTotals
+   * 
+   */
   public function setTotals($subtotal,$tax = 0,$shipping = 0) {
     $this->totals = array(
         'subtotal'    => number_format($subtotal, 2, '.', ''),
@@ -56,15 +62,25 @@ class FirstData {
     $this->totals['chargetotal'] = $chargetotal;
   }
   
-  /* function: chargeIt
-   * Input: paymentMethod (M, V, A, C, J, D)
+  /* function: setCardInfo
+   * Input: cardType(M, V, A, C, J, D), cardNum, expMonth, expYear, cvv, billingInfo(array)
    * M = Mastercard, V = Visa, A = Amex, C = Diners, J = JCB, D = Discover
    */
-  public function chargeIt($paymentMethod) {
+  public function setCardInfo($cardType,$cardNum,$expMonth,$expYear,$cvv,$billingInfo) {
     $cardTypes = array('M','V','A','C','J','D');
-    if (!in_array(strtoupper($paymentMethod), $cardTypes)) {
+    if (!$cardType || !$cardNum || !$expMonth || !$expYear || !$cvv || !$billingInfo) {
+      throw new Exception('Complete card info required.');
+    }
+    if (!in_array(strtoupper($cardType), $cardTypes)) {
       throw new Exception('Card type invalid.');
     }
+    
+  }
+  
+  /* function: chargeIt
+   * 
+   */
+  public function chargeIt() {
     $txndatetime = date('%Y:%m:%d-%H:%i:%s');
     $hash = createHash($txndatetime);
     
@@ -73,7 +89,7 @@ class FirstData {
   /* function: createHash
    * Creates SHA2 hash for authentication to gateway
    */
-  private function createHash($dateTime) { 
+  private function createHash($dateTime) {
     $str = $this->store.$dateTime().$this->totals['chargetotal'].$this->sharedKey;
     for ($i = 0; $i < strlen($str); $i++){ 
       $hex_str.=dechex(ord($str[$i]));
