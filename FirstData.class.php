@@ -11,6 +11,7 @@ class FirstData {
   public $oid;
   private $sharedKey;
   private $store;
+  private $postingURL;
   private $config;
   private $options;
   private $totals;
@@ -23,7 +24,7 @@ class FirstData {
    * Required Params: sharedKey, store, oid(public - can be set later)
    * Optional Params: config(array), options(array)
    */
-  public function __construct($sharedKey,$store,$oid = '',$config = array(),$options = array()) {
+  public function __construct($sharedKey,$store,$postingURL,$oid = '',$config = array(),$options = array()) {
     if (!$sharedKey) {
       throw new Exception('Shared Key Required.');
     } else {
@@ -33,6 +34,11 @@ class FirstData {
       throw new Exception('Store Required.');
     } else {
       $this->store = $store;
+    }
+    if (!$postingURL) {
+      throw new Exception('POST URL Required.');
+    } else {
+      $this->postingURL = $postingURL;
     }
     
     if ($oid) $this->oid = $oid;

@@ -1,0 +1,5 @@
+<?php
+static $sharedKey = ''; //Read this in from a file or hard code it.
+static $store = '';
+static $postingURL = '';
+?>
