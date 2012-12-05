@@ -170,7 +170,7 @@ class FirstData {
     //die($fields_string);
 
 		/*** Download the WSDL File for Local use ***/
-		$fp = fopen(getcwd().'/FirstData.wsdl', 'w');
+		$fp = fopen('/tmp/FirstData.wsdl', 'w');
 		$ch = curl_init('https://ws.merchanttest.firstdataglobalgateway.com/fdggwsapi/services/order.wsdl');
 		curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
 		curl_setopt($ch, CURLOPT_USERPWD, 'WS'.$this->store.'._.1:'.$this->pass);
@@ -182,11 +182,10 @@ class FirstData {
     $data = curl_exec($ch);
     curl_close($ch);
     fclose($fp);
-		exit;
 		/*** ***/
 		
 		try {
-			$sc = new SoapClient('https://'.($this->userId.':'.$this->pass).'@ws.merchanttest.firstdataglobalgateway.com/fdggwsapi/services/order.wsdl', array(
+			$sc = new SoapClient('/tmp/FirstData.wsdl', array(
 					'encoding'			=>'UTF-8',
 					'soap_version'	=> SOAP_1_2,
 					'exceptions'		=> true,
@@ -196,7 +195,7 @@ class FirstData {
 					'local_cert'		=> $this->sslKey,
 					'passphrase'		=> $this->sslKeyPass
 			));
-			//var_dump($sc);exit;
+			var_dump($sc);exit;
 		
 			$args = array();
 			$response = $sc->FDGGWSApiOrderRequest($args);
