@@ -184,6 +184,9 @@ class FirstData {
     fclose($fp);
 		/*** ***/
 		
+		/*** Proof of Concept. This is a really ugly hack and we shouldn't do it ***/
+		/*** Not Future Proof ***/
+		
 		/*** Download the v1.xsd File for Local use ***/
 		$fp = fopen('/tmp/v1.xsd', 'w');
 		$ch = curl_init('https://ws.merchanttest.firstdataglobalgateway.com/fdggwsapi/schemas_us/v1.xsd');
@@ -214,31 +217,16 @@ class FirstData {
     fclose($fp);
 		/*** ***/
 		
-		/*** Download the fdggwsapi.xsd File for Local use ***/
-		$fp = fopen('/tmp/fdggwsapi.xsd', 'w');
-		$ch = curl_init('https://ws.merchanttest.firstdataglobalgateway.com/fdggwsapi/schemas_us/fdggwsapi.xsd');
-		curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-		curl_setopt($ch, CURLOPT_USERPWD, 'WS'.$this->store.'._.1:'.$this->pass);
-		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
-		curl_setopt($ch, CURLOPT_SSLCERT, $this->sslCert);
-		curl_setopt($ch, CURLOPT_SSLKEY, $this->sslKey);
-		curl_setopt($ch, CURLOPT_SSLKEYPASSWD, $this->sslKeyPass);
-		curl_setopt($ch, CURLOPT_FILE, $fp);
-    $data = curl_exec($ch);
-    curl_close($ch);
-    fclose($fp);
-		/*** ***/
-		
 		/*** Proof of Concept. This is a really ugly hack and we shouldn't do it ***/
 		$content = str_replace('schemaLocation="../schemas_us/v1.xsd"', 'schemaLocation="/tmp/v1.xsd"', file_get_contents('/tmp/FirstData.wsdl'));
 		file_put_contents('/tmp/FirstData.wsdl',$content);
 		$content = str_replace('schemaLocation="../schemas_us/a1.xsd"', 'schemaLocation="/tmp/a1.xsd"', file_get_contents('/tmp/FirstData.wsdl'));
 		file_put_contents('/tmp/FirstData.wsdl',$content);
+		//The First Data API imports sub-WSDLs but duplicates them. We have to remove them.
 		$content = str_replace('<xs:import namespace="http://secure.linkpt.net/fdggwsapi/schemas_us/v1"        schemaLocation="../schemas_us/v1.xsd" />', '', file_get_contents('/tmp/a1.xsd'));
 		file_put_contents('/tmp/a1.xsd',$content);
 		$content = str_replace('<xs:import namespace="http://secure.linkpt.net/fdggwsapi/schemas_us/fdggwsapi" schemaLocation="../schemas_us/fdggwsapi.xsd" />', '', file_get_contents('/tmp/a1.xsd'));
 		file_put_contents('/tmp/a1.xsd',$content);
-		//The First Data API imports sub-WSDLs but duplicates them. We have to remove them.
 		$content = str_replace('<xs:import namespace="http://secure.linkpt.net/fdggwsapi/schemas_us/v1" schemaLocation="../schemas_us/v1.xsd" />', '', file_get_contents('/tmp/fdggwsapi.xsd'));
 		file_put_contents('/tmp/fdggwsapi.xsd',$content);
 		$content = str_replace('<xs:import namespace="http://secure.linkpt.net/fdggwsapi/schemas_us/a1" schemaLocation="../schemas_us/a1.xsd" />', '', file_get_contents('/tmp/fdggwsapi.xsd'));
@@ -259,10 +247,13 @@ class FirstData {
 			//var_dump($sc);exit;
 		
 			$args = array();
-			$response = $sc->FDGGWSApiOrderRequest($args);
-			var_dump($response);exit;
+			
+			//print_r($sc->__getFunctions());exit;
+			
+			$response = $sc->FDGGWSApiOrder($args);
+			//var_dump($response);exit;
 		} catch (SoapFault $e) {
-      //echo $e->faultcode.' : '.$e->faultstring;exit;
+      echo $e->faultcode.' : '.$e->faultstring."\n\n<br /><br />";
 			var_dump($e);exit;
     }
   }
