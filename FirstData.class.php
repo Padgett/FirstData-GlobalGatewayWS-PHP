@@ -168,29 +168,6 @@ class FirstData {
     }
     $fields_string = rtrim($fields_string, '&');
     //die($fields_string);
-
-		
-		$sc = new SoapClient(null, array(
-				'encoding'			=>'UTF-8',
-				'soap_version'	=> SOAP_1_2,
-				'exceptions'		=> true,
-				'cache_wsdl'		=> WSDL_CACHE_NONE,
-				'location'			=> $this->postingURL,
-				'uri'						=> $this->postingURL, //'https://ws.merchanttest.firstdataglobalgateway.com/fdggwsapi/schemas_us/fdggwsapi.xsd',
-				'login'					=> $this->userId,
-				'password'			=> $this->pass,
-				'local_cert'		=> $this->sslKey,
-				'passphrase'		=> $this->sslKeyPass
-		));
-		//var_dump($sc);exit;
-		try {
-			$args = array();
-			$response = $sc->__soapCall('FDGGWSApiOrderRequest',$args);
-			var_dump($response);exit;
-		} catch (SoapFault $e) {
-      //echo $e->faultcode.' '.$e->faultstring;exit;
-			var_dump($e);exit;
-    }
 		
 		/*** Let's build our curl request ***/
 		$SOAPbody = '<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/">';
