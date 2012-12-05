@@ -170,15 +170,18 @@ class FirstData {
     //die($fields_string);
 
 		/*** Let's build our curl request ***/
-		$SOAPbody = '<SOAP-ENV:Envelope ...>';
+		$SOAPbody = '<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/">';
 		
 		$SOAPbody .= '</SOAP-ENV:Envelope>';
+		
+		echo $SOAPbody;
 		
     $ch = curl_init($this->postingURL);
 		curl_setopt($ch, CURLOPT_POST, 1);
 		curl_setopt($ch, CURLOPT_HTTPHEADER, array("Content-Type: text/xml"));
 		curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-		curl_setopt($ch, CURLOPT_USERPWD, base64_encode('WS'.$this->store.'._.1:'.$this->pass));
+		//curl_setopt($ch, CURLOPT_USERPWD, base64_encode('WS'.$this->store.'._.1:'.$this->pass));
+		curl_setopt($ch, CURLOPT_USERPWD, 'WS'.$this->store.'._.1:'.$this->pass);
 		curl_setopt($ch, CURLOPT_POSTFIELDS, $SOAPbody);
 		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
 		curl_setopt($ch, CURLOPT_SSLCERT, $this->sslCert);
