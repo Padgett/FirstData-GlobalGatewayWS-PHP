@@ -2,7 +2,7 @@
 require_once('config.php');
 require_once('FirstData.class.php');
 
-$cc = new FirstData($sharedKey, $store, $postingURL, true, 1);
+$cc = new FirstData($postingURL, $store, $userID, $password, $sslCert, $sslKey, $sslKeyPass);
 
 $cc->setCardInfo('V', '4111111111111111', '12', '2014', '123');
 $cc->setTotals(1.00);

@@ -1,6 +1,6 @@
 <?php
 /**
- * First Data Global Gateway Connect 2.0 API for PHP
+ * First Data Global Gateway Web Service API for PHP
  * Supports Credit Cards only
  *
  * @author Joshua Padgett
@@ -8,10 +8,13 @@
  * 
  */
 class FirstData {
-  private $sharedKey;
-  private $store;
   private $postingURL;
-  private $testing;
+	private $store;
+	private $userId;
+	private $pass;
+	private $sslCert;
+	private $sslKey;
+	private $sslKeyPass;
   public $oid;
   private $config;
   private $options;
@@ -27,24 +30,26 @@ class FirstData {
    * 
    * txtntype Options: ECI, MOTO, RETAIL
    */
-  public function __construct($sharedKey,$store,$postingURL,$testing = false,$oid = '',$config = array(),$options = array()) {
-    if (!$sharedKey) {
-      throw new Exception('Shared Key Required.');
-    } else {
-      $this->sharedKey = $sharedKey;
-    }
-    if (!$store) {
-      throw new Exception('Store Required.');
-    } else {
-      $this->store = $store;
-    }
+  public function __construct($postingURL,$store,$userID,$pass,$sslCert,$sslKey,$sslKeyPass,$oid = '',$config = array(),$options = array()) {
     if (!$postingURL) {
       throw new Exception('POST URL Required.');
     } else {
       $this->postingURL = $postingURL;
     }
-    
-    $this->testing = $testing;
+		if (!$store) {
+      throw new Exception('Store Required.');
+    } else {
+      $this->store = $store;
+    }
+		if (!$userID || !$pass || !$sslCert || !$sslKey || !$sslKeyPass) {
+      throw new Exception('User ID, Password, SSL Cert, SSL Key, and SSL Key Password Required.');
+    } else {
+			$this->userId = $userID;
+			$this->pass = $pass;
+			$this->sslCert = $sslCert;
+			$this->sslKey = $sslKey;
+			$this->sslKeyPass = $sslKeyPass;
+		}
     
     if ($oid) $this->oid = $oid;
     
@@ -130,11 +135,7 @@ class FirstData {
   /* function: chargeIt
    * Charges the card
    */
-  public function chargeIt() {
-    if (empty($this->oid)) {
-      throw new Exception('Order ID (oid) is not set.');
-    }
-    
+  public function chargeIt() {    
     $txndatetime = date('Y:m:d-H:i:s');
     $hash = $this->createHash($txndatetime);
     
@@ -168,33 +169,49 @@ class FirstData {
     $fields_string = rtrim($fields_string, '&');
     //die($fields_string);
 
+		/*** Let's build our curl request ***/
+		$SOAPbody = '<SOAP-ENV:Envelope ...>';
+		
+		$SOAPbody .= '</SOAP-ENV:Envelope>';
+		
     $ch = curl_init($this->postingURL);
-    //curl_setopt($ch, CURLOPT_HEADER, TRUE);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
-    //curl_setopt($ch, CURLOPT_CAINFO, getcwd().'/connect.firstdataglobalgateway.com.pem');
-    if ($this->testing) curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-    curl_setopt($ch, CURLOPT_POST, count($fields));
-    curl_setopt($ch, CURLOPT_POSTFIELDS, $fields_string);
-    $response = curl_exec($ch);
-    if($response === false)
-    {
-      throw new Exception('Curl error: '.curl_error($ch));
-    }
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-    
-    /*** Handle Response ***/
-    if ($httpCode >= 400) {
-      throw new Exception('HTTP Error: '.$httpCode);
-    }
-    //TODO: Actually handle this properly
-    return $response; //For Testing
-    
-    
-    
-    //Let's wipe the card info from memory, just to be safe.
-    $this->cardInfo = null;
-    unset($this->cardInfo);
+		curl_setopt($ch, CURLOPT_POST, 1);
+		curl_setopt($ch, CURLOPT_HTTPHEADER, array("Content-Type: text/xml"));
+		curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+		curl_setopt($ch, CURLOPT_USERPWD, base64_encode('WS'.$this->store.'._.1:'.$this->pass));
+		curl_setopt($ch, CURLOPT_POSTFIELDS, $SOAPbody);
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+		curl_setopt($ch, CURLOPT_SSLCERT, $this->sslCert);
+		curl_setopt($ch, CURLOPT_SSLKEY, $this->sslKey);
+		curl_setopt($ch, CURLOPT_SSLKEYPASSWD, $this->sslKeyPass);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+		/*** ***/
+		
+		try {
+			$response = curl_exec($ch);
+
+			if($response === false)
+			{
+				throw new Exception('Curl error: '.curl_error($ch));
+			}
+			$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+			curl_close($ch);
+		
+			
+			/*** Handle Response ***/
+			if ($httpCode >= 400) {
+				//throw new Exception('HTTP Error: '.$httpCode.'<br /><br />\n\n'.$response);
+				throw new Exception($response);
+			}
+			//TODO: Actually handle this properly
+			return $response; //For Testing
+
+			//Let's wipe the card info from memory, just to be safe.
+			$this->cardInfo = null;
+			unset($this->cardInfo);
+		} catch (Exception $e) {
+			die($e->getMessage());
+		}
   }
   
   /* function: setOptions
