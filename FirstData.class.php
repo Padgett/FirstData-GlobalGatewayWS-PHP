@@ -169,26 +169,24 @@ class FirstData {
     $fields_string = rtrim($fields_string, '&');
     //die($fields_string);
 
-		
-		$sc = new SoapClient(null, array(
-				'encoding'			=>'UTF-8',
-				'soap_version'	=> SOAP_1_2,
-				'exceptions'		=> true,
-				'cache_wsdl'		=> WSDL_CACHE_NONE,
-				'location'			=> $this->postingURL,
-				'uri'						=> $this->postingURL, //'https://ws.merchanttest.firstdataglobalgateway.com/fdggwsapi/schemas_us/fdggwsapi.xsd',
-				'login'					=> $this->userId,
-				'password'			=> $this->pass,
-				'local_cert'		=> $this->sslKey,
-				'passphrase'		=> $this->sslKeyPass
-		));
-		//var_dump($sc);exit;
 		try {
+			$sc = new SoapClient('https://'.($this->userId.':'.$this->pass).'@ws.merchanttest.firstdataglobalgateway.com/fdggwsapi/services/order.wsdl', array(
+					'encoding'			=>'UTF-8',
+					'soap_version'	=> SOAP_1_2,
+					'exceptions'		=> true,
+					'cache_wsdl'		=> WSDL_CACHE_NONE,
+					'login'					=> $this->userId,
+					'password'			=> $this->pass,
+					'local_cert'		=> $this->sslKey,
+					'passphrase'		=> $this->sslKeyPass
+			));
+			//var_dump($sc);exit;
+		
 			$args = array();
-			$response = $sc->__soapCall('FDGGWSApiOrderRequest',$args);
+			$response = $sc->FDGGWSApiOrderRequest($args);
 			var_dump($response);exit;
 		} catch (SoapFault $e) {
-      //echo $e->faultcode.' '.$e->faultstring;exit;
+      //echo $e->faultcode.' : '.$e->faultstring;exit;
 			var_dump($e);exit;
     }
   }
