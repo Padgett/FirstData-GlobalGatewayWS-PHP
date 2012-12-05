@@ -15,5 +15,5 @@ $cc->setBillingInfo(array(
     'zip'     => '85080'
 ));
 
-echo $cc->chargeIt();
+print_r($cc->chargeIt());
 ?>

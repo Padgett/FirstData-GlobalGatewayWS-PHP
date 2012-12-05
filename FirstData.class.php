@@ -169,12 +169,36 @@ class FirstData {
     $fields_string = rtrim($fields_string, '&');
     //die($fields_string);
 
+		
+		$sc = new SoapClient(null, array(
+				'encoding'			=>'UTF-8',
+				'soap_version'	=> SOAP_1_2,
+				'exceptions'		=> true,
+				'cache_wsdl'		=> WSDL_CACHE_NONE,
+				'location'			=> $this->postingURL,
+				'uri'						=> $this->postingURL, //'https://ws.merchanttest.firstdataglobalgateway.com/fdggwsapi/schemas_us/fdggwsapi.xsd',
+				'login'					=> $this->userId,
+				'password'			=> $this->pass,
+				'local_cert'		=> $this->sslKey,
+				'passphrase'		=> $this->sslKeyPass
+		));
+		//var_dump($sc);exit;
+		try {
+			$args = array();
+			$response = $sc->__soapCall('FDGGWSApiOrderRequest',$args);
+			var_dump($response);exit;
+		} catch (SoapFault $e) {
+      //echo $e->faultcode.' '.$e->faultstring;exit;
+			var_dump($e);exit;
+    }
+		
 		/*** Let's build our curl request ***/
 		$SOAPbody = '<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/">';
+		$SOAPbody .= '<SOAP-ENV:Header /><SOAP-ENV:Body>';
 		
-		$SOAPbody .= '</SOAP-ENV:Envelope>';
+		$SOAPbody .= '</SOAP-ENV:Body></SOAP-ENV:Envelope>';
 		
-		echo $SOAPbody;
+		//echo $SOAPbody.'<br /><br />';
 		
     $ch = curl_init($this->postingURL);
 		curl_setopt($ch, CURLOPT_POST, 1);
@@ -202,12 +226,22 @@ class FirstData {
 		
 			
 			/*** Handle Response ***/
-			if ($httpCode >= 400) {
-				//throw new Exception('HTTP Error: '.$httpCode.'<br /><br />\n\n'.$response);
-				throw new Exception($response);
-			}
+//			if ($httpCode >= 400) {
+//				//throw new Exception('HTTP Error: '.$httpCode.'<br /><br />\n\n'.$response);
+//				throw new Exception($response);
+//			}
 			//TODO: Actually handle this properly
-			return $response; //For Testing
+			
+			// SimpleXML seems to have problems with the colon ":" in the <xxx:yyy> response tags, so take them out 
+			//$xmlString = preg_replace("/(<\/?)(\w+):([^>]*>)/", "$1$2$3", $response);
+			$response = str_replace('fdggwsapi:', '', $response);
+			//die($response);
+			$return = simplexml_load_string($response,null,null,'http://schemas.xmlsoap.org/soap/envelope/');
+			//$return->registerXPathNamespace('fdggwsapi', 'https://ws.merchanttest.firstdataglobalgateway.com/fdggwsapi/schemas_us/fdggwsapi.xsd');
+			//http://secure.linkpt.net/fdggwsapi/schemas_us/fdggwsapi
+			//$return = simplexml_load_string($xmlString);
+			//return $return->Body->children('https://ws.merchanttest.firstdataglobalgateway.com/fdggwsapi/schemas_us/fdggwsapi.xsd'); //For Testing
+			return $return;
 
 			//Let's wipe the card info from memory, just to be safe.
 			$this->cardInfo = null;
