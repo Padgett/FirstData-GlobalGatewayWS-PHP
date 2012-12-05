@@ -184,6 +184,67 @@ class FirstData {
     fclose($fp);
 		/*** ***/
 		
+		/*** Download the v1.xsd File for Local use ***/
+		$fp = fopen('/tmp/v1.xsd', 'w');
+		$ch = curl_init('https://ws.merchanttest.firstdataglobalgateway.com/fdggwsapi/schemas_us/v1.xsd');
+		curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+		curl_setopt($ch, CURLOPT_USERPWD, 'WS'.$this->store.'._.1:'.$this->pass);
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+		curl_setopt($ch, CURLOPT_SSLCERT, $this->sslCert);
+		curl_setopt($ch, CURLOPT_SSLKEY, $this->sslKey);
+		curl_setopt($ch, CURLOPT_SSLKEYPASSWD, $this->sslKeyPass);
+		curl_setopt($ch, CURLOPT_FILE, $fp);
+    $data = curl_exec($ch);
+    curl_close($ch);
+    fclose($fp);
+		/*** ***/
+		
+		/*** Download the a1.xsd File for Local use ***/
+		$fp = fopen('/tmp/a1.xsd', 'w');
+		$ch = curl_init('https://ws.merchanttest.firstdataglobalgateway.com/fdggwsapi/schemas_us/a1.xsd');
+		curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+		curl_setopt($ch, CURLOPT_USERPWD, 'WS'.$this->store.'._.1:'.$this->pass);
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+		curl_setopt($ch, CURLOPT_SSLCERT, $this->sslCert);
+		curl_setopt($ch, CURLOPT_SSLKEY, $this->sslKey);
+		curl_setopt($ch, CURLOPT_SSLKEYPASSWD, $this->sslKeyPass);
+		curl_setopt($ch, CURLOPT_FILE, $fp);
+    $data = curl_exec($ch);
+    curl_close($ch);
+    fclose($fp);
+		/*** ***/
+		
+		/*** Download the fdggwsapi.xsd File for Local use ***/
+		$fp = fopen('/tmp/fdggwsapi.xsd', 'w');
+		$ch = curl_init('https://ws.merchanttest.firstdataglobalgateway.com/fdggwsapi/schemas_us/fdggwsapi.xsd');
+		curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+		curl_setopt($ch, CURLOPT_USERPWD, 'WS'.$this->store.'._.1:'.$this->pass);
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+		curl_setopt($ch, CURLOPT_SSLCERT, $this->sslCert);
+		curl_setopt($ch, CURLOPT_SSLKEY, $this->sslKey);
+		curl_setopt($ch, CURLOPT_SSLKEYPASSWD, $this->sslKeyPass);
+		curl_setopt($ch, CURLOPT_FILE, $fp);
+    $data = curl_exec($ch);
+    curl_close($ch);
+    fclose($fp);
+		/*** ***/
+		
+		/*** Proof of Concept. This is a really ugly hack and we shouldn't do it ***/
+		$content = str_replace('schemaLocation="../schemas_us/v1.xsd"', 'schemaLocation="/tmp/v1.xsd"', file_get_contents('/tmp/FirstData.wsdl'));
+		file_put_contents('/tmp/FirstData.wsdl',$content);
+		$content = str_replace('schemaLocation="../schemas_us/a1.xsd"', 'schemaLocation="/tmp/a1.xsd"', file_get_contents('/tmp/FirstData.wsdl'));
+		file_put_contents('/tmp/FirstData.wsdl',$content);
+		$content = str_replace('<xs:import namespace="http://secure.linkpt.net/fdggwsapi/schemas_us/v1"        schemaLocation="../schemas_us/v1.xsd" />', '', file_get_contents('/tmp/a1.xsd'));
+		file_put_contents('/tmp/a1.xsd',$content);
+		$content = str_replace('<xs:import namespace="http://secure.linkpt.net/fdggwsapi/schemas_us/fdggwsapi" schemaLocation="../schemas_us/fdggwsapi.xsd" />', '', file_get_contents('/tmp/a1.xsd'));
+		file_put_contents('/tmp/a1.xsd',$content);
+		//The First Data API imports sub-WSDLs but duplicates them. We have to remove them.
+		$content = str_replace('<xs:import namespace="http://secure.linkpt.net/fdggwsapi/schemas_us/v1" schemaLocation="../schemas_us/v1.xsd" />', '', file_get_contents('/tmp/fdggwsapi.xsd'));
+		file_put_contents('/tmp/fdggwsapi.xsd',$content);
+		$content = str_replace('<xs:import namespace="http://secure.linkpt.net/fdggwsapi/schemas_us/a1" schemaLocation="../schemas_us/a1.xsd" />', '', file_get_contents('/tmp/fdggwsapi.xsd'));
+		file_put_contents('/tmp/fdggwsapi.xsd',$content);
+		/*** ***/
+		
 		try {
 			$sc = new SoapClient('/tmp/FirstData.wsdl', array(
 					'encoding'			=>'UTF-8',
@@ -195,7 +256,7 @@ class FirstData {
 					'local_cert'		=> $this->sslKey,
 					'passphrase'		=> $this->sslKeyPass
 			));
-			var_dump($sc);exit;
+			//var_dump($sc);exit;
 		
 			$args = array();
 			$response = $sc->FDGGWSApiOrderRequest($args);
