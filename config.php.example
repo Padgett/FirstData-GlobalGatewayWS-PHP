@@ -1,5 +1,9 @@
 <?php
-static $sharedKey = ''; //Read this in from a file or hard code it.
+static $postingURL = 'https://ws.merchanttest.firstdataglobalgateway.com/fdggwsapi/services'; //Client Test Env URL
 static $store = '';
-static $postingURL = '';
+static $userID = '';
+static $password = '';
+static $sslCert = ''; //File path
+static $sslKey = ''; //File path
+static $sslKeyPass = ''; //String
 ?>
