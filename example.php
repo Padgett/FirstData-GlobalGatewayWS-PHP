@@ -15,11 +15,11 @@ $cc->setBillingInfo(array(
     'zip'     => '85080'
 ));
 
-if ($cc->systemCheckAPI()) {
-	echo "Alive";
-} else {
-	echo "Connection Error.";
-}
+//if ($cc->systemCheckAPI()) {
+//	echo "Alive";
+//} else {
+//	echo "Connection Error.";
+//}
 
 print_r($cc->chargeIt());
 ?>

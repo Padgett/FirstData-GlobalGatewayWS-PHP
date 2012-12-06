@@ -96,7 +96,7 @@ class FirstData {
     $this->cardInfo = array(
         'cardnumber'  => (int)$cardNum,
         'expmonth'    => (int)$expMonth,
-        'expyear'     => (int)$expYear,
+        'expyear'     => (strlen($expYear) > 2) ? (int)substr($expYear, -2) : (int)$expYear,
         'cvm'         => (int)$cvv
     );
     
@@ -164,7 +164,7 @@ class FirstData {
 			</fdggwsapi:FDGGWSApiOrderRequest>';
 		$soapBody .= '</SOAP-ENV:Body></SOAP-ENV:Envelope>';
 		/*** ***/
-		echo $soapBody;exit;
+		//echo $soapBody;exit;
 		
 		try {
 			$response = $this->curlIt($soapBody);
@@ -248,9 +248,9 @@ class FirstData {
 	/* Function: parseResponse
 	 * 
 	 */
-	private function parseResponse($string) {
+	private function parseResponse($stringOrig) {
 		// SimpleXML seems to have problems with the mixed namespaces, so take them out.
-		$string = str_replace('fdggwsapi:', '', $string);
+		$string = str_replace('fdggwsapi:', '', $stringOrig);
 		$string = str_replace('SOAP-ENV:', '', $string);
 
 		//Now strip down to just the Body contents.
@@ -260,7 +260,12 @@ class FirstData {
 		$string = preg_replace('/( xmlns:.*")/', '', $matches[1]);
 
 		//Finally, generate our simplexml object.
-		return simplexml_load_string($string);
+		$return = simplexml_load_string($string);
+		if ($return === false) {
+			throw new Exception('XML Error: Could not parse: '.$stringOrig);
+		}
+		
+		return $return;
 	}
   
   /* function: createHash
