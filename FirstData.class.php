@@ -17,7 +17,6 @@ class FirstData {
 	private $sslKeyPass;
   public $oid;
   private $config;
-  private $options;
   private $totals;
   private $cardInfo;
   private $billingInfo;
@@ -30,7 +29,7 @@ class FirstData {
    * 
    * txtntype Options: ECI, MOTO, RETAIL
    */
-  public function __construct($postingURL,$store,$userID,$pass,$sslCert,$sslKey,$sslKeyPass,$oid = '',$config = array(),$options = array()) {
+  public function __construct($postingURL,$store,$userID,$pass,$sslCert,$sslKey,$sslKeyPass,$oid = '',$config = array()) {
     if (!$postingURL) {
       throw new Exception('POST URL Required.');
     } else {
@@ -59,8 +58,6 @@ class FirstData {
         'mode'        => (empty($config['mode'])) ? 'payonly' : $config['mode'],
         'trxOrigin'   => (empty($config['trxOrigin'])) ? 'ECI' : $config['trxOrigin']
     );
-    
-    if ($options) $this->setOptions($options);
   }
   
   public function __destruct() {
@@ -136,38 +133,6 @@ class FirstData {
    * Charges the card
    */
   public function chargeIt() {    
-    $txndatetime = date('Y:m:d-H:i:s');
-    $hash = $this->createHash($txndatetime);
-    
-    /*** Send to First Data ***/
-    //Gather all our arrays together
-    $fields['storename'] = $this->store;
-    $fields['oid'] = $this->oid;
-    $fields['txndatetime'] = $txndatetime;
-    $fields['hash'] = $hash;
-    foreach ($this->config as $key => $val) {
-      $fields[$key] = urlencode($val);
-    }
-    foreach ($this->options as $key => $val) {
-      $fields[$key] = urlencode($val);
-    }
-    foreach ($this->totals as $key => $val) {
-      $fields[$key] = urlencode($val);
-    }
-    foreach ($this->cardInfo as $key => $val) {
-      $fields[$key] = urlencode($val);
-    }
-    foreach ($this->billingInfo as $key => $val) {
-      $fields[$key] = urlencode($val);
-    }
-    
-    //url-ify the data for the POST
-    $fields_string = '';
-    foreach ($fields as $key=>$value) { 
-      $fields_string .= $key.'='.$value.'&';
-    }
-    $fields_string = rtrim($fields_string, '&');
-    //die($fields_string);
 
 		try {
 			$sc = new SoapClient('https://'.($this->userId.':'.$this->pass).'@ws.merchanttest.firstdataglobalgateway.com/fdggwsapi/services/order.wsdl', array(
