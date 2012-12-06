@@ -94,10 +94,10 @@ class FirstData {
     }
     
     $this->cardInfo = array(
-        'cardnumber'  => $cardNum,
-        'expmonth'    => $expMonth,
-        'expyear'     => $expYear,
-        'cvm'         => $cvv
+        'cardnumber'  => (int)$cardNum,
+        'expmonth'    => (int)$expMonth,
+        'expyear'     => (int)$expYear,
+        'cvm'         => (int)$cvv
     );
     
     //Setup the billing info if it's been passed in.
@@ -133,9 +133,38 @@ class FirstData {
 		/*** Let's build our curl request ***/
 		$soapBody = '<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/">';
 		$soapBody .= '<SOAP-ENV:Header /><SOAP-ENV:Body>';
-		
+		$soapBody .= '
+			<fdggwsapi:FDGGWSApiOrderRequest xmlns:v1="http://secure.linkpt.net/fdggwsapi/schemas_us/v1" xmlns:fdggwsapi="http://secure.linkpt.net/fdggwsapi/schemas_us/fdggwsapi">
+				<v1:Transaction>
+					<v1:CreditCardTxType>
+						<v1:Type>sale</v1:Type>
+					</v1:CreditCardTxType>
+					<v1:CreditCardData>
+						<v1:CardNumber>'.$this->cardInfo['cardnumber'].'</v1:CardNumber>
+						<v1:ExpMonth>'.$this->cardInfo['expmonth'].'</v1:ExpMonth>
+						<v1:ExpYear>'.$this->cardInfo['expyear'].'</v1:ExpYear>
+						<v1:CardCodeValue>'.$this->cardInfo['cvm'].'</v1:CardCodeValue>
+					</v1:CreditCardData>
+					<v1:Payment>
+						<v1:ChargeTotal>'.$this->totals['chargetotal'].'</v1:ChargeTotal>
+						<v1:SubTotal>'.$this->totals['subtotal'].'</v1:SubTotal>
+						<v1:VATTax>'.$this->totals['tax'].'</v1:VATTax>
+						<v1:Shipping>'.$this->totals['shipping'].'</v1:Shipping>
+					</v1:Payment>
+					<v1:TransactionDetails>
+						<v1:TransactionOrigin>ECI</v1:TransactionOrigin>
+					</v1:TransactionDetails>
+					<v1:Billing>
+						
+					</v1:Billing>
+					<v1:Shipping>
+						
+					</v1:Shipping>
+				</v1:Transaction>
+			</fdggwsapi:FDGGWSApiOrderRequest>';
 		$soapBody .= '</SOAP-ENV:Body></SOAP-ENV:Envelope>';
 		/*** ***/
+		echo $soapBody;exit;
 		
 		try {
 			$response = $this->curlIt($soapBody);
@@ -151,10 +180,7 @@ class FirstData {
 		$soapBody = '<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/">';
 		$soapBody .= '<SOAP-ENV:Header /><SOAP-ENV:Body>';
 		$soapBody .= '
-			<fdggwsapi:FDGGWSApiActionRequest xmlns:fdggwsapi=
-			"http://secure.linkpt.net/fdggwsapi/schemas_us/fdggwsapi" xmlns:a1=
-			"http://secure.linkpt.net/fdggwsapi/schemas_us/a1" xmlns:v1=
-			"http://secure.linkpt.net/fdggwsapi/schemas_us/v1">
+			<fdggwsapi:FDGGWSApiActionRequest xmlns:fdggwsapi="http://secure.linkpt.net/fdggwsapi/schemas_us/fdggwsapi" xmlns:a1="http://secure.linkpt.net/fdggwsapi/schemas_us/a1" xmlns:v1="http://secure.linkpt.net/fdggwsapi/schemas_us/v1">
 				<a1:Action>
 					<a1:SystemCheck/>
 				</a1:Action>
