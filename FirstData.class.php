@@ -23,11 +23,8 @@ class FirstData {
   
   /* function: __construct
    * Constructs the object.
-   * Options array will be appended to the charge request. Add your custom fields here.
-   * Required Params: sharedKey, store, oid(public - can be set later)
-   * Optional Params: oid, config(array), options(array)
-   * 
-   * txtntype Options: ECI, MOTO, RETAIL
+   * Required Params: postingURL, store, userID, pass, sslCert, sslKey, sslKeyPass
+   * Optional Params: oid, config(array)
    */
   public function __construct($postingURL,$store,$userID,$pass,$sslCert,$sslKey,$sslKeyPass,$oid = '',$config = array()) {
     if (!$postingURL) {
@@ -132,89 +129,51 @@ class FirstData {
   /* function: chargeIt
    * Charges the card
    */
-  public function chargeIt() {    
-    
-		$sc = new SoapClient(null, array(
-				'encoding'			=>'UTF-8',
-				'soap_version'	=> SOAP_1_2,
-				'exceptions'		=> true,
-				'cache_wsdl'		=> WSDL_CACHE_NONE,
-				'location'			=> $this->postingURL,
-				'uri'						=> $this->postingURL, //'https://ws.merchanttest.firstdataglobalgateway.com/fdggwsapi/schemas_us/fdggwsapi.xsd',
-				'login'					=> $this->userId,
-				'password'			=> $this->pass,
-				'local_cert'		=> $this->sslKey,
-				'passphrase'		=> $this->sslKeyPass
-		));
-		//var_dump($sc);exit;
-		try {
-			$args = array();
-			$response = $sc->__soapCall('FDGGWSApiOrderRequest',$args);
-			var_dump($response);exit;
-		} catch (SoapFault $e) {
-      //echo $e->faultcode.' '.$e->faultstring;exit;
-			var_dump($e);exit;
-    }
-		
+  public function chargeIt() {
 		/*** Let's build our curl request ***/
-		$SOAPbody = '<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/">';
-		$SOAPbody .= '<SOAP-ENV:Header /><SOAP-ENV:Body>';
+		$soapBody = '<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/">';
+		$soapBody .= '<SOAP-ENV:Header /><SOAP-ENV:Body>';
 		
-		$SOAPbody .= '</SOAP-ENV:Body></SOAP-ENV:Envelope>';
-		
-		//echo $SOAPbody.'<br /><br />';
-		
-    $ch = curl_init($this->postingURL);
-		curl_setopt($ch, CURLOPT_POST, 1);
-		curl_setopt($ch, CURLOPT_HTTPHEADER, array("Content-Type: text/xml"));
-		curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-		//curl_setopt($ch, CURLOPT_USERPWD, base64_encode('WS'.$this->store.'._.1:'.$this->pass));
-		curl_setopt($ch, CURLOPT_USERPWD, 'WS'.$this->store.'._.1:'.$this->pass);
-		curl_setopt($ch, CURLOPT_POSTFIELDS, $SOAPbody);
-		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
-		curl_setopt($ch, CURLOPT_SSLCERT, $this->sslCert);
-		curl_setopt($ch, CURLOPT_SSLKEY, $this->sslKey);
-		curl_setopt($ch, CURLOPT_SSLKEYPASSWD, $this->sslKeyPass);
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+		$soapBody .= '</SOAP-ENV:Body></SOAP-ENV:Envelope>';
 		/*** ***/
 		
 		try {
-			$response = curl_exec($ch);
-
-			if($response === false)
-			{
-				throw new Exception('Curl error: '.curl_error($ch));
-			}
-			$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-			curl_close($ch);
-		
+			$response = $this->curlIt($soapBody);
 			
-			/*** Handle Response ***/
-//			if ($httpCode >= 400) {
-//				//throw new Exception('HTTP Error: '.$httpCode.'<br /><br />\n\n'.$response);
-//				throw new Exception($response);
-//			}
-			//TODO: Actually handle this properly
-			
-			// SimpleXML seems to have problems with the colon ":" in the <xxx:yyy> response tags, so take them out 
-			//$xmlString = preg_replace("/(<\/?)(\w+):([^>]*>)/", "$1$2$3", $response);
-			$response = str_replace('fdggwsapi:', '', $response);
-			//die($response);
-			$return = simplexml_load_string($response,null,null,'http://schemas.xmlsoap.org/soap/envelope/');
-			//$return->registerXPathNamespace('fdggwsapi', 'https://ws.merchanttest.firstdataglobalgateway.com/fdggwsapi/schemas_us/fdggwsapi.xsd');
-			//http://secure.linkpt.net/fdggwsapi/schemas_us/fdggwsapi
-			//$return = simplexml_load_string($xmlString);
-			//return $return->Body->children('https://ws.merchanttest.firstdataglobalgateway.com/fdggwsapi/schemas_us/fdggwsapi.xsd'); //For Testing
-			return $return;
-
-			//Let's wipe the card info from memory, just to be safe.
-			$this->cardInfo = null;
-			unset($this->cardInfo);
+			return $response;
 		} catch (Exception $e) {
 			die($e->getMessage());
 		}
   }
   
+	public function systemCheckAPI() {
+		/*** Generate our Soap Request ***/
+		$soapBody = '<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/">';
+		$soapBody .= '<SOAP-ENV:Header /><SOAP-ENV:Body>';
+		$soapBody .= '
+			<fdggwsapi:FDGGWSApiActionRequest xmlns:fdggwsapi=
+			"http://secure.linkpt.net/fdggwsapi/schemas_us/fdggwsapi" xmlns:a1=
+			"http://secure.linkpt.net/fdggwsapi/schemas_us/a1" xmlns:v1=
+			"http://secure.linkpt.net/fdggwsapi/schemas_us/v1">
+				<a1:Action>
+					<a1:SystemCheck/>
+				</a1:Action>
+			</fdggwsapi:FDGGWSApiActionRequest>';
+		$soapBody .= '</SOAP-ENV:Body></SOAP-ENV:Envelope>';
+		/*** ***/
+		
+		try {
+			$response = $this->curlIt($soapBody);
+			if ($response->Success == 'true') {
+				return true;
+			} else {
+				return false;
+			}
+		} catch (Exception $e) {
+			die($e->getMessage());
+		}
+	}
+	
   /* function: setOptions
    * Replaces or clears existing options
    */
@@ -233,6 +192,50 @@ class FirstData {
       $this->options[$key] = $val;
     }
   }
+	
+	/* Function: curlIt
+	 * 
+	 */
+	private function curlIt($body) {
+		$ch = curl_init($this->postingURL);
+		curl_setopt($ch, CURLOPT_POST, 1);
+		curl_setopt($ch, CURLOPT_HTTPHEADER, array("Content-Type: text/xml"));
+		curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+		curl_setopt($ch, CURLOPT_USERPWD, 'WS'.$this->store.'._.1:'.$this->pass);
+		curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+		curl_setopt($ch, CURLOPT_SSLCERT, $this->sslCert);
+		curl_setopt($ch, CURLOPT_SSLKEY, $this->sslKey);
+		curl_setopt($ch, CURLOPT_SSLKEYPASSWD, $this->sslKeyPass);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+		$response = curl_exec($ch);
+		
+		if($response === false) {
+			throw new Exception('Curl error: '.curl_error($ch));
+		}
+		$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+		curl_close($ch);
+		
+		return $this->parseResponse($response);
+	}
+	
+	/* Function: parseResponse
+	 * 
+	 */
+	private function parseResponse($string) {
+		// SimpleXML seems to have problems with the mixed namespaces, so take them out.
+		$string = str_replace('fdggwsapi:', '', $string);
+		$string = str_replace('SOAP-ENV:', '', $string);
+
+		//Now strip down to just the Body contents.
+		//$matches[0] includes Body tags, $matches[1] does not.
+		preg_match('/<Body>(.*)<\/Body>/m', $string, $matches);
+		//remove the xmlns reference.
+		$string = preg_replace('/( xmlns:.*")/', '', $matches[1]);
+
+		//Finally, generate our simplexml object.
+		return simplexml_load_string($string);
+	}
   
   /* function: createHash
    * Creates SHA2 hash for authentication to gateway

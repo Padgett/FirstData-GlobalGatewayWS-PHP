@@ -1,8 +1,8 @@
 <?php
 static $postingURL = 'https://ws.merchanttest.firstdataglobalgateway.com/fdggwsapi/services'; //Client Test Env URL
-static $store = '';
-static $userID = '';
-static $password = '';
+static $store = ''; //String
+static $userID = ''; //String
+static $password = ''; //String
 static $sslCert = ''; //File path
 static $sslKey = ''; //File path
 static $sslKeyPass = ''; //String
