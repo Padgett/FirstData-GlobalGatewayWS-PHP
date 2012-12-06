@@ -184,7 +184,7 @@ class FirstData {
     fclose($fp);
 		/*** ***/
 		
-		/*** Proof of Concept. This is a really ugly hack and we shouldn't do it ***/
+		/*** Proof of Concept. This is a really ugly hack and we shouldn't do this. ***/
 		/*** Not Future Proof ***/
 		
 		/*** Download the v1.xsd File for Local use ***/
@@ -217,7 +217,7 @@ class FirstData {
     fclose($fp);
 		/*** ***/
 		
-		/*** Proof of Concept. This is a really ugly hack and we shouldn't do it ***/
+		/*** Proof of Concept. This is a really ugly hack and we shouldn't do this. ***/
 		$content = str_replace('schemaLocation="../schemas_us/v1.xsd"', 'schemaLocation="/tmp/v1.xsd"', file_get_contents('/tmp/FirstData.wsdl'));
 		file_put_contents('/tmp/FirstData.wsdl',$content);
 		$content = str_replace('schemaLocation="../schemas_us/a1.xsd"', 'schemaLocation="/tmp/a1.xsd"', file_get_contents('/tmp/FirstData.wsdl'));
@@ -227,10 +227,6 @@ class FirstData {
 		file_put_contents('/tmp/a1.xsd',$content);
 		$content = str_replace('<xs:import namespace="http://secure.linkpt.net/fdggwsapi/schemas_us/fdggwsapi" schemaLocation="../schemas_us/fdggwsapi.xsd" />', '', file_get_contents('/tmp/a1.xsd'));
 		file_put_contents('/tmp/a1.xsd',$content);
-		$content = str_replace('<xs:import namespace="http://secure.linkpt.net/fdggwsapi/schemas_us/v1" schemaLocation="../schemas_us/v1.xsd" />', '', file_get_contents('/tmp/fdggwsapi.xsd'));
-		file_put_contents('/tmp/fdggwsapi.xsd',$content);
-		$content = str_replace('<xs:import namespace="http://secure.linkpt.net/fdggwsapi/schemas_us/a1" schemaLocation="../schemas_us/a1.xsd" />', '', file_get_contents('/tmp/fdggwsapi.xsd'));
-		file_put_contents('/tmp/fdggwsapi.xsd',$content);
 		/*** ***/
 		
 		try {
@@ -251,9 +247,10 @@ class FirstData {
 			//print_r($sc->__getFunctions());exit;
 			
 			$response = $sc->FDGGWSApiOrder($args);
-			//var_dump($response);exit;
+			var_dump($response);exit;
 		} catch (SoapFault $e) {
-      echo $e->faultcode.' : '.$e->faultstring."\n\n<br /><br />";
+      var_dump($sc);exit;
+			echo $e->faultcode.' : '.$e->faultstring."\n\n<br /><br />";
 			var_dump($e);exit;
     }
   }
