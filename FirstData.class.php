@@ -206,45 +206,15 @@ class FirstData {
 				</a1:Action>
 			</fdggwsapi:FDGGWSApiActionRequest>';
 		$soapBody .= '</SOAP-ENV:Body></SOAP-ENV:Envelope>';
-		
-		$ch = curl_init($this->postingURL);
-		curl_setopt($ch, CURLOPT_POST, 1);
-		curl_setopt($ch, CURLOPT_HTTPHEADER, array("Content-Type: text/xml"));
-		curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-		curl_setopt($ch, CURLOPT_USERPWD, 'WS'.$this->store.'._.1:'.$this->pass);
-		curl_setopt($ch, CURLOPT_POSTFIELDS, $soapBody);
-		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
-		curl_setopt($ch, CURLOPT_SSLCERT, $this->sslCert);
-		curl_setopt($ch, CURLOPT_SSLKEY, $this->sslKey);
-		curl_setopt($ch, CURLOPT_SSLKEYPASSWD, $this->sslKeyPass);
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 		/*** ***/
 		
 		try {
-			$response = curl_exec($ch);
-
-			if($response === false)
-			{
-				throw new Exception('Curl error: '.curl_error($ch));
+			$response = $this->curlIt($soapBody);
+			if ($response->Success == 'true') {
+				return true;
+			} else {
+				return false;
 			}
-			$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-			curl_close($ch);
-		
-			/*** Handle Response ***/
-			
-			// SimpleXML seems to have problems with the mixed namespaces, so take them out.
-			$response = str_replace('fdggwsapi:', '', $response);
-			$response = str_replace('SOAP-ENV:', '', $response);
-			
-			//Now strip down to just the Body contents.
-			//$matches[0] includes Body tags, $matches[1] does not.
-			preg_match('/<Body>(.*)<\/Body>/m', $response, $matches);
-			//remove the xmlns references.
-			$response = preg_replace('/( xmlns:.*")/', '', $matches[1]);
-
-			//Finally, generate our simplexml object.
-			$return = simplexml_load_string($response);
-			return $return;
 		} catch (Exception $e) {
 			die($e->getMessage());
 		}
@@ -268,6 +238,50 @@ class FirstData {
       $this->options[$key] = $val;
     }
   }
+	
+	/* Function: curlIt
+	 * 
+	 */
+	private function curlIt($body) {
+		$ch = curl_init($this->postingURL);
+		curl_setopt($ch, CURLOPT_POST, 1);
+		curl_setopt($ch, CURLOPT_HTTPHEADER, array("Content-Type: text/xml"));
+		curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+		curl_setopt($ch, CURLOPT_USERPWD, 'WS'.$this->store.'._.1:'.$this->pass);
+		curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+		curl_setopt($ch, CURLOPT_SSLCERT, $this->sslCert);
+		curl_setopt($ch, CURLOPT_SSLKEY, $this->sslKey);
+		curl_setopt($ch, CURLOPT_SSLKEYPASSWD, $this->sslKeyPass);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+		$response = curl_exec($ch);
+		
+		if($response === false) {
+			throw new Exception('Curl error: '.curl_error($ch));
+		}
+		$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+		curl_close($ch);
+		
+		return $this->parseResponse($response);
+	}
+	
+	/* Function: parseResponse
+	 * 
+	 */
+	private function parseResponse($string) {
+		// SimpleXML seems to have problems with the mixed namespaces, so take them out.
+		$string = str_replace('fdggwsapi:', '', $string);
+		$string = str_replace('SOAP-ENV:', '', $string);
+
+		//Now strip down to just the Body contents.
+		//$matches[0] includes Body tags, $matches[1] does not.
+		preg_match('/<Body>(.*)<\/Body>/m', $string, $matches);
+		//remove the xmlns reference.
+		$string = preg_replace('/( xmlns:.*")/', '', $matches[1]);
+
+		//Finally, generate our simplexml object.
+		return simplexml_load_string($string);
+	}
   
   /* function: createHash
    * Creates SHA2 hash for authentication to gateway
