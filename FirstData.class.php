@@ -20,6 +20,7 @@ class FirstData {
   private $totals;
   private $cardInfo;
   private $billingInfo;
+	private $shippingInfo;
   
   /* function: __construct
    * Constructs the object.
@@ -111,18 +112,31 @@ class FirstData {
    */
   public function setBillingInfo($billingInfo) {
     $this->billingInfo = array(
-        'bcompany'  => $billingInfo['company'],
-        'bname'     => $billingInfo['name'],
-        'baddr1'    => $billingInfo['addr1'],
-        'baddr2'    => $billingInfo['addr2'],
-        'bcity'     => $billingInfo['city'],
-        'bstate'    => $billingInfo['state'],
-        'bstate2'   => $billingInfo['state2'],
-        'bcountry'  => $billingInfo['country'],
-        'bzip'      => $billingInfo['zip'],
+        'company'  => $billingInfo['company'],
+        'name'     => $billingInfo['name'],
+        'addr1'    => $billingInfo['addr1'],
+        'addr2'    => $billingInfo['addr2'],
+        'city'     => $billingInfo['city'],
+        'state'    => $billingInfo['state'],
+        'country'  => $billingInfo['country'],
+        'zip'      => $billingInfo['zip'],
         'phone'     => $billingInfo['phone'],
-        'fax'       => $billingInfo['fax'],
-        'email'     => $billingInfo['email']
+        'fax'       => $billingInfo['fax']
+    );
+  }
+	
+	/* function: setShippingInfo
+   * 
+   */
+  public function setShippingInfo($shippingInfo) {
+    $this->shippingInfo = array(
+        'name'     => $shippingInfo['name'],
+        'addr1'    => $shippingInfo['addr1'],
+        'addr2'    => $shippingInfo['addr2'],
+        'city'     => $shippingInfo['city'],
+        'state'    => $shippingInfo['state'],
+        'country'  => $shippingInfo['country'],
+        'zip'      => $shippingInfo['zip'],
     );
   }
   
@@ -152,13 +166,29 @@ class FirstData {
 						<v1:Shipping>'.$this->totals['shipping'].'</v1:Shipping>
 					</v1:Payment>
 					<v1:TransactionDetails>
+						<v1:OrderId>'.$this->oid.'</v1:OrderId>
 						<v1:TransactionOrigin>ECI</v1:TransactionOrigin>
 					</v1:TransactionDetails>
 					<v1:Billing>
-						
+						<v1:Name>'.$this->billingInfo['name'].'</v1:Name>
+						<v1:Company>'.$this->billingInfo['company'].'</v1:Company>
+						<v1:Address1>'.$this->billingInfo['addr1'].'</v1:Address1>
+						<v1:Address2>'.$this->billingInfo['addr2'].'</v1:Address2>
+						<v1:City>'.$this->billingInfo['city'].'</v1:City>
+						<v1:State>'.$this->billingInfo['state'].'</v1:State>
+						<v1:Zip>'.$this->billingInfo['zip'].'</v1:Zip>
+						<v1:Country>'.$this->billingInfo['country'].'</v1:Country>
+						<v1:Phone>'.$this->billingInfo['phone'].'</v1:Phone>
+						<v1:Fax>'.$this->billingInfo['fax'].'</v1:Fax>
 					</v1:Billing>
 					<v1:Shipping>
-						
+						<v1:Name>'.$this->shippingInfo['name'].'</v1:Name>
+						<v1:Address1>'.$this-> shippingInfo['addr1'].'</v1:Address1>
+						<v1:Address2>'.$this->shippingInfo['addr2'].'</v1:Address2>
+						<v1:City>'.$this->shippingInfo['city'].'</v1:City>
+						<v1:State>'.$this->shippingInfo['state'].'</v1:State>
+						<v1:Zip>'.$this->shippingInfo['zip'].'</v1:Zip>
+						<v1:Country>'.$this->shippingInfo['country'].'</v1:Country>
 					</v1:Shipping>
 				</v1:Transaction>
 			</fdggwsapi:FDGGWSApiOrderRequest>';
