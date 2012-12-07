@@ -198,13 +198,39 @@ class FirstData {
 		
 		try {
 			$response = $this->curlIt($soapBody);
-			
-			return $response;
 		} catch (Exception $e) {
-			die($e->getMessage());
+			//Handle this gracefully. Overload errorMessage as you desire
+			return array(
+					'approved'					=> false,
+					'errorMessage'			=> 'Server Error. If this persists, please contact the administrator.',
+					'exception'					=> true,
+					'exceptionMessage'	=> $e->getMessage()
+			);
 		}
+		
+		$result = array(
+				'exception' => false
+		);
+		//Was the transaction approved?
+		if ($response->ProcessorResponseCode == 'A' && $response->TransactionResult == 'APPROVED') {
+			$result['approved'] = true;
+			if (empty($this->oid)) $this->oid = (string)$response->OrderId;
+		} else {
+			$result['approved'] = false;
+		}
+		$result['errorMessage'] = (string)$response->ErrorMessage;
+		$result['transactionTime'] = (string)$response->TransactionTime;
+		$result['tDate'] = (string)$response->TDate;
+		$result['oid']	= $this->oid;
+		$result['reference'] = (string)$response->ProcessorReferenceNumber;
+		$result['approvalCode'] = (string)$response->ApprovalCode;
+		
+		return $result;
   }
   
+	/* Function: systemCheckAPI
+	 * Checks the First Data Web Service for status
+	 */
 	public function systemCheckAPI() {
 		/*** Generate our Soap Request ***/
 		$soapBody = '<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/">';
@@ -226,6 +252,7 @@ class FirstData {
 				return false;
 			}
 		} catch (Exception $e) {
+			//TODO: Proper Exception handling
 			die($e->getMessage());
 		}
 	}
@@ -250,7 +277,7 @@ class FirstData {
   }
 	
 	/* Function: curlIt
-	 * 
+	 * Perform the curl action
 	 */
 	private function curlIt($body) {
 		$ch = curl_init($this->postingURL);
@@ -276,7 +303,7 @@ class FirstData {
 	}
 	
 	/* Function: parseResponse
-	 * 
+	 * Parse the returned xml
 	 */
 	private function parseResponse($stringOrig) {
 		// SimpleXML seems to have problems with the mixed namespaces, so take them out.
@@ -297,18 +324,6 @@ class FirstData {
 		
 		return $return;
 	}
-  
-  /* function: createHash
-   * Creates SHA2 hash for authentication to gateway
-   */
-  private function createHash($dateTime) {
-    $str = $this->store.$dateTime.$this->totals['chargetotal'].$this->sharedKey;
-    $hex_str = '';
-    for ($i = 0; $i < strlen($str); $i++){ 
-      $hex_str .= dechex(ord($str[$i]));
-    }
-    return hash('sha256', $hex_str);
-  }
    
 }
 
