@@ -86,18 +86,37 @@ class FirstData {
    * M = Mastercard, V = Visa, A = Amex, C = Diners, J = JCB, D = Discover
    */
   public function setCardInfo($cardType,$cardNum,$expMonth,$expYear,$cvv,$billingInfo = array()) {
-    $cardTypes = array('M','V','A','C','J','D');
     if (!$cardType || !$cardNum || !$expMonth || !$expYear || !$cvv) {
       throw new Exception('Complete card info required.');
     }
+		
+		$cardTypes = array('M','V','A','C','J','D');
     if (!in_array(strtoupper($cardType), $cardTypes)) {
       throw new Exception('Card type invalid.');
     }
+		
+		$cardNum = preg_replace('/[^0-9]/s', '', $cardNum);
+		if (strlen($cardNum) < 15 || strlen($cardNum) > 16) {
+			throw new Exception('Card number invalid. Wrong Length.');
+		} else {
+			if (!$this->luhn_check()) {
+				throw new Exception('Card number invalid.');
+			}
+		}
+		
+		$expMonth = (int)$expMonth;
+		$expYear = (strlen($expYear) > 2) ? (int)substr($expYear, -2) : (int)$expYear;
+		if ($expMonth == 0 || $expYear == 0) {
+			throw new Exception('Invalid values for Expiration.');
+		} else {
+			$expMonth = str_pad($expMonth, 2, "0", STR_PAD_LEFT);
+			$expYear = str_pad($expYear, 2, "0", STR_PAD_LEFT);
+		}
     
     $this->cardInfo = array(
-        'cardnumber'  => (int)$cardNum,
-        'expmonth'    => (int)$expMonth,
-        'expyear'     => (strlen($expYear) > 2) ? (int)substr($expYear, -2) : (int)$expYear,
+        'cardnumber'  => $cardNum,
+        'expmonth'    => $expMonth,
+        'expyear'     => $expYear,
         'cvm'         => (int)$cvv
     );
     
@@ -214,7 +233,7 @@ class FirstData {
 		//Was the transaction approved?
 		if ($response->ProcessorResponseCode == 'A' && $response->TransactionResult == 'APPROVED') {
 			$result['approved'] = true;
-			if (empty($this->oid)) $this->oid = (string)$response->OrderId;
+			$this->oid = (string)$response->OrderId;
 		} else {
 			$result['approved'] = false;
 		}
@@ -323,6 +342,33 @@ class FirstData {
 		}
 		
 		return $return;
+	}
+	
+	private function luhn_check() {
+		$cardnumber = $this->cardInfo['cardnumber'];
+
+		// Set the string length and parity
+		$cardnumber_length = strlen($cardnumber);
+		$cardnumber_parity = $cardnumber_length % 2;
+
+		// Loop through each digit and do the maths
+		$total=0;
+		for ($i=0; $i<$cardnumber_length; $i++) {
+			$digit = $cardnumber[$i];
+			// Multiply alternate digits by two
+			if ($i % 2 == $cardnumber_parity) {
+				$digit *= 2;
+				// If the sum is two digits, add them together (in effect)
+				if ($digit > 9) {
+					$digit -= 9;
+				}
+			}
+			// Total up the digits
+			$total += $digit;
+		}
+
+		// If the total mod 10 equals 0, the number is valid
+		return ($total % 10 == 0) ? true : false;
 	}
    
 }
