@@ -202,7 +202,7 @@ class FirstData {
 			//Handle this gracefully. Overload errorMessage as you desire
 			return array(
 					'approved'					=> false,
-					'errorMessage'			=> 'Server Error. If this persists, please contact the administrator.',
+					'errorMessage'			=> 'Internal Server Error. If this persists, please contact the administrator.',
 					'exception'					=> true,
 					'exceptionMessage'	=> $e->getMessage()
 			);
